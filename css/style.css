@@ -1,0 +1,539 @@
+:root {
+    /* Color Palette - Light Mode - Stardew Valley */
+    --primary-color: #d97a3a; /* Earthy wood orange */
+    --primary-hover: #b95d22;
+    --bg-color: #f4d9b4; /* Warm sand/wood */
+    --card-bg: #e6c594; /* Darker board */
+    --text-main: #4a3424; /* Dark brown for contrast */
+    --text-muted: #735942;
+    --border-color: #8c603a; /* Wood border */
+    --input-bg: #f9eedf;
+    --accent-red: #d94a3a;
+    --accent-green: #629c44; /* Grass green */
+    --shadow: 4px 4px 0px rgba(0,0,0,0.15); /* Hard pixel shadow */
+    --glass-blur: none; /* No glass */
+}
+
+.dark-mode {
+    /* Color Palette - Dark Mode - Stardew Night */
+    --primary-color: #b56c36;
+    --primary-hover: #985526;
+    --bg-color: #2b394a; /* Night sky blue */
+    --card-bg: #3c4c61;
+    --text-main: #f0decc;
+    --text-muted: #b5a496;
+    --border-color: #1a2533;
+    --input-bg: #222d3b;
+    --shadow: 4px 4px 0px rgba(0,0,0,0.3);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'DotGothic16', 'Inter', sans-serif;
+    image-rendering: auto; /* Base */
+}
+svg {
+    image-rendering: pixelated;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    transition: background-color 0.4s ease, color 0.4s ease;
+    overflow-x: hidden;
+}
+
+/* Background Animated Circles - Removed for Pixel Art Vibe */
+.background-blur {
+    display: none;
+}
+
+
+.app-container {
+    width: 100%;
+    max-width: 600px;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.logo h1 {
+    font-size: 28px;
+    font-weight: normal;
+    letter-spacing: -1px;
+    color: var(--text-main);
+}
+
+.logo h1 span {
+    color: var(--primary-color);
+}
+
+.icon-btn {
+    background: var(--card-bg);
+    border: 4px solid var(--border-color);
+    color: var(--text-main);
+    width: 44px;
+    height: 44px;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+}
+
+.icon-btn:hover {
+    transform: translateY(2px);
+    box-shadow: 0px 0px 0px rgba(0,0,0,0.2);
+}
+
+.icon-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.icon-btn {
+    position: relative;
+}
+
+.hidden { display: none; }
+
+/* Cards & Components */
+.card {
+    background: var(--card-bg);
+    border: 4px solid var(--border-color);
+    border-radius: 0;
+    padding: 24px;
+    box-shadow: var(--shadow);
+}
+
+/* Add Task Section */
+.add-task-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.input-group {
+    display: flex;
+    gap: 12px;
+}
+
+#task-input {
+    flex: 1;
+    background: var(--input-bg);
+    border: 4px solid var(--border-color);
+    padding: 14px 18px;
+    border-radius: 0;
+    color: var(--text-main);
+    font-size: 16px;
+    transition: all 0.1s ease;
+}
+
+#task-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.primary-btn {
+    background: var(--primary-color);
+    color: white;
+    border: 4px solid #8c4a24;
+    padding: 0 24px;
+    border-radius: 0;
+    font-weight: normal;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    white-space: nowrap;
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+}
+
+.primary-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(2px);
+    box-shadow: 0px 0px 0px rgba(0,0,0,0.3);
+}
+
+.options-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.option-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.option-item label {
+    font-size: 13px;
+    font-weight: normal;
+    color: var(--text-muted);
+    margin-left: 4px;
+}
+
+.option-item input, .option-item select {
+    background: var(--input-bg);
+    border: 4px solid var(--border-color);
+    padding: 10px 12px;
+    border-radius: 0;
+    color: var(--text-main);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.1s ease;
+}
+
+.option-item select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 36px; /* 增加右側空間給圖示 */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center; /* 這裡控制圖示往左移動的距離 */
+}
+
+/* Filter Section */
+.filter-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+}
+
+.filter-tabs {
+    display: flex;
+    background: var(--card-bg);
+    padding: 5px;
+    border-radius: 0;
+    border: 4px solid var(--border-color);
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+}
+
+.filter-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 0;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: normal;
+    cursor: pointer;
+    transition: all 0.1s ease;
+}
+
+.filter-btn.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.stats {
+    font-size: 14px;
+    font-weight: normal;
+    color: var(--text-muted);
+}
+
+/* Todo List Area */
+.todo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.todo-item {
+    display: flex;
+    align-items: center;
+    background: var(--card-bg);
+    border: 4px solid var(--border-color);
+    padding: 16px 20px;
+    border-radius: 0;
+    box-shadow: var(--shadow);
+    transition: transform 0.1s;
+}
+
+
+.todo-item:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary-color);
+}
+
+.checkbox-container {
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.todo-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.task-text {
+    font-size: 16px;
+    font-weight: normal;
+    color: var(--text-main);
+}
+
+.todo-item.completed .task-text {
+    color: var(--text-muted);
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+.task-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.tag-reason-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: -2px;
+}
+
+.tag-badge {
+    padding: 4px 12px;
+    border-radius: 0;
+    font-weight: normal;
+    font-size: 11px;
+    display: inline-block;
+    border: 2px solid rgba(0,0,0,0.2);
+}
+
+/* 標籤配色系統 (馬卡龍色系) */
+.tag-badge.tag-影視 {
+    background: #FFB3BA; /* 粉紅 */
+    color: #8C4A4A;
+}
+
+.tag-badge.tag-書籍 {
+    background: #BAFFC9; /* 粉綠 */
+    color: #4A8C5A;
+}
+
+.tag-badge.tag-音樂 {
+    background: #BAE1FF; /* 粉藍 */
+    color: #4A6A8C;
+}
+
+.tag-badge.tag-課程 {
+    background: #FFFFBA; /* 粉黃 */
+    color: #8C8C4A;
+}
+
+.tag-badge.tag-遊戲 {
+    background: #FFD1A3; /* 粉橙 - 活潑 */
+    color: #8C5B3A;
+}
+
+.tag-select-wrapper {
+    display: flex;
+    gap: 12px;
+}
+
+.tag-select-wrapper select {
+    flex: 1;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    padding: 6px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.bomb-btn:hover, .bomb-btn.active {
+    color: #ef4444;
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.bomb-btn.active svg {
+    fill: #ef4444;
+}
+
+.todo-item.is-thunder {
+    background: rgba(239, 68, 68, 0.05);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.pin-btn:hover, .pin-btn.active {
+    color: #f59e0b;
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.pin-btn.active svg {
+    fill: #f59e0b;
+}
+
+.todo-item.pinned {
+    border-left: 4px solid #f59e0b;
+}
+
+.calendar-btn:hover {
+    color: var(--accent-green);
+    border-color: var(--accent-green);
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.delete-btn:hover {
+    color: var(--accent-red);
+    border-color: var(--accent-red);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+/* Custom Checkbox */
+.custom-checkbox {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.todo-item.completed .custom-checkbox {
+    background: var(--accent-green);
+    border-color: var(--accent-green);
+}
+
+.custom-checkbox::after {
+    content: '✓';
+    color: white;
+    font-size: 14px;
+    display: none;
+}
+
+.todo-item.completed .custom-checkbox::after {
+    display: block;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .options-group {
+        grid-template-columns: 1fr;
+    }
+    
+    .filter-section {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+    }
+    
+    .stats {
+        text-align: center;
+    }
+}
+
+
+.todo-item.deleting {
+    pointer-events: none;
+}
+
+/* Drag and Drop Styles */
+.drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 6px;
+    color: var(--text-muted);
+    cursor: grab;
+    padding: 2px;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.drag-handle:hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary-color);
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.todo-item.dragging {
+    opacity: 0.5;
+    transform: scale(0.98);
+    border: 2px dashed var(--primary-color);
+    box-shadow: none;
+    background: rgba(99, 102, 241, 0.05);
+}
+
+/* 讓正在拖動的項目不響應滑鼠，以便 dragover 能偵測到下方的項目 */
+.todo-item.dragging * {
+    pointer-events: none;
+}
+
+.todo-list.drag-over .todo-item {
+    transition: transform 0.2s ease;
+}
+
+/* 拖拽指示線 (HR) */
+.drag-placeholder {
+    height: 3px;
+    background: var(--primary-color);
+    margin: 4px 0;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+    pointer-events: none;
+    transition: all 0.1s ease;
+}
+
+#animation-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+}

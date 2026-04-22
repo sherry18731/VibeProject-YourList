@@ -1,0 +1,33 @@
+/* Keyframe Animations */
+@keyframes float {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(50px, 100px) scale(1.1); }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideOut {
+    0% { opacity: 1; transform: translateX(0); }
+    100% { opacity: 0; transform: translateX(100px); }
+}
+
+/* Animation Assignments */
+.background-blur::before,
+.background-blur::after {
+    animation: float 20s infinite alternate;
+}
+
+.background-blur::after {
+    animation-delay: -5s;
+}
+
+.todo-item {
+    animation: slideUp 0.3s steps(4);
+}
+
+.todo-item.deleting {
+    animation: slideOut 0.3s steps(4) forwards;
+}

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登入 YourList - 您的生活風格清單</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    <link rel="stylesheet" href="../css/login.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+</head>
+<body class="light-mode login-page">
+    <div class="background-blur"></div>
+
+    <a href="index.html" class="back-home">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        <span>返回主頁</span>
+    </a>
+
+    <div class="login-container">
+        <div id="login-card" class="login-card view-login">
+            <!-- Login View -->
+            <div id="login-form-container">
+                <header class="login-header">
+                    <h2>歡迎回來</h2>
+                </header>
+
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">電子郵件</label>
+                        <div class="input-wrapper">
+                            <input type="email" id="login-email" placeholder="name@example.com" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">密碼</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="login-password" placeholder="••••••••" required>
+                        </div>
+                    </div>
+
+                    <div class="auth-actions">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" style="width: 16px; height: 16px; accent-color: var(--primary-color);"> 
+                            <span style="color: var(--text-muted);">記住我</span>
+                        </label>
+                        <a href="#" class="forgot-link">忘記密碼？</a>
+                    </div>
+
+                    <button type="submit" class="primary-btn submit-btn">登入帳號</button>
+                    
+                    <div class="form-footer">
+                        還沒有帳號？ <a href="#" id="show-signup">立即註冊</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Signup View (Hidden by default via JS class) -->
+            <div id="signup-form-container">
+                <header class="login-header">
+                    <h2>會員體驗</h2>
+                </header>
+                <form id="signup-form">
+                    <div class="form-group">
+                        <label for="signup-name">顯示名稱</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="signup-name" placeholder="您的名字" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">電子郵件</label>
+                        <div class="input-wrapper">
+                            <input type="email" id="signup-email" placeholder="name@example.com" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">密碼</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="signup-password" placeholder="至少 8 個字元" required minlength="8">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="primary-btn submit-btn" style="margin-top: 10px;">註冊並登入</button>
+                    
+                    <div class="form-footer">
+                        已經有帳號了？ <a href="#" id="show-login">點此登入</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/login.js"></script>
+</body>
+</html>
