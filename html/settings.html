@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YourList - 設定</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+    <style>
+        .settings-section {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            padding: 40px 30px;
+        }
+        .settings-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .settings-group label {
+            font-size: 16px;
+            color: var(--text-main);
+        }
+        .settings-group input, .settings-group select {
+            width: 100%;
+            background: var(--input-bg);
+            border: 4px solid var(--border-color);
+            padding: 12px;
+            color: var(--text-main);
+            font-size: 15px;
+        }
+        .save-btn-container {
+            margin-top: 20px;
+        }
+        .save-btn-container button {
+            width: 100%;
+            padding: 14px;
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <div class="background-blur"></div>
+    
+    <div class="app-container">
+        <header class="member-header">
+            <div class="header-side left">
+                <button id="back-btn" class="icon-btn" aria-label="返回會員中心" onclick="window.location.href='member.html'">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </button>
+            </div>
+            <div class="logo">
+                <h1 id="settings-title">系統<span>設定</span></h1>
+            </div>
+            <div class="header-side right header-actions">
+                <button id="theme-toggle" class="icon-btn" aria-label="切換主題">
+                    <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    <svg id="moon-icon" class="hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
+            </div>
+        </header>
+
+        <section class="card settings-section">
+            <div class="settings-group">
+                <label for="user-name-input" id="label-username">使用者名稱</label>
+                <input type="text" id="user-name-input" placeholder="輸入您的名稱">
+            </div>
+
+            <div class="settings-group">
+                <label for="language-select" id="label-language">顯示語言</label>
+                <select id="language-select">
+                    <option value="zh-TW">繁體中文 (台灣)</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+
+            <div class="save-btn-container">
+                <button id="save-settings" class="primary-btn">儲存設定</button>
+            </div>
+        </section>
+
+        <footer class="app-footer">
+            <p id="footer-text">目前網頁正在開發階段，部分功能可能尚不完整。</p>
+        </footer>
+    </div>
+
+    <script src="../js/settings.js"></script>
+</body>
+</html>

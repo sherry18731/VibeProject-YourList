@@ -12,6 +12,18 @@
     --accent-green: #629c44; /* Grass green */
     --shadow: 4px 4px 0px rgba(0,0,0,0.15); /* Hard pixel shadow */
     --glass-blur: none; /* No glass */
+
+    /* Tag Colors - Light Mode */
+    --tag-movie-bg: #ff9aa2;
+    --tag-movie-text: #6b2d2d;
+    --tag-book-bg: #b5ebb6;
+    --tag-book-text: #2d5a3a;
+    --tag-music-bg: #a2d2ff;
+    --tag-music-text: #2d4a6b;
+    --tag-course-bg: #f9f9a2;
+    --tag-course-text: #5a5a2d;
+    --tag-game-bg: #ffc8a2;
+    --tag-game-text: #6b442d;
 }
 
 .dark-mode {
@@ -25,6 +37,18 @@
     --border-color: #1a2533;
     --input-bg: #222d3b;
     --shadow: 4px 4px 0px rgba(0,0,0,0.3);
+
+    /* Tag Colors - Dark Mode */
+    --tag-movie-bg: #8c4a4a;
+    --tag-movie-text: #ffb3ba;
+    --tag-book-bg: #4a8c5a;
+    --tag-book-text: #baffc9;
+    --tag-music-bg: #4a6a8c;
+    --tag-music-text: #bae1ff;
+    --tag-course-bg: #8c8c4a;
+    --tag-course-text: #ffffba;
+    --tag-game-bg: #8c5b3a;
+    --tag-game-text: #ffd1a3;
 }
 
 * {
@@ -107,6 +131,21 @@ header {
     box-shadow: 0px 0px 0px rgba(0,0,0,0.2);
 }
 
+.icon-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-dark);
+    box-shadow: inset 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+body.eraser-mode {
+    cursor: cell; /* 備用樣式 */
+}
+
+body.eraser-mode #animation-canvas {
+    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21'/><path d='M22 21H7'/><path d='m5 11 9 9'/></svg>") 0 24, crosshair;
+}
+
 .icon-btn svg {
     width: 20px;
     height: 20px;
@@ -114,6 +153,19 @@ header {
 
 .icon-btn {
     position: relative;
+}
+
+#user-name-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--primary-color);
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border: 2px solid var(--border-color);
+    white-space: nowrap;
+    pointer-events: none;
 }
 
 .hidden { display: none; }
@@ -137,6 +189,17 @@ header {
 .input-group {
     display: flex;
     gap: 12px;
+    flex-wrap: wrap; /* allow wrapping on small screens */
+    width: 100%;
+}
+
+@media (max-width: 480px) {
+    .input-group {
+        flex-direction: column;
+    }
+    #task-input {
+        width: 100% !important; /* ensure full width on mobile */
+    }
 }
 
 #task-input {
@@ -150,10 +213,22 @@ header {
     transition: all 0.1s ease;
 }
 
-#task-input:focus {
+
+/* 統一 focus-visible 樣式 */
+#task-input:focus-visible {
     outline: none;
     border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-color);
 }
+/* 其他可聚焦元素的統一樣式 */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
 
 .primary-btn {
     background: var(--primary-color);
@@ -325,30 +400,30 @@ header {
     border: 2px solid rgba(0,0,0,0.2);
 }
 
-/* 標籤配色系統 (馬卡龍色系) */
+/* 標籤配色系統 */
 .tag-badge.tag-影視 {
-    background: #FFB3BA; /* 粉紅 */
-    color: #8C4A4A;
+    background: var(--tag-movie-bg);
+    color: var(--tag-movie-text);
 }
 
 .tag-badge.tag-書籍 {
-    background: #BAFFC9; /* 粉綠 */
-    color: #4A8C5A;
+    background: var(--tag-book-bg);
+    color: var(--tag-book-text);
 }
 
 .tag-badge.tag-音樂 {
-    background: #BAE1FF; /* 粉藍 */
-    color: #4A6A8C;
+    background: var(--tag-music-bg);
+    color: var(--tag-music-text);
 }
 
 .tag-badge.tag-課程 {
-    background: #FFFFBA; /* 粉黃 */
-    color: #8C8C4A;
+    background: var(--tag-course-bg);
+    color: var(--tag-course-text);
 }
 
 .tag-badge.tag-遊戲 {
-    background: #FFD1A3; /* 粉橙 - 活潑 */
-    color: #8C5B3A;
+    background: var(--tag-game-bg);
+    color: var(--tag-game-text);
 }
 
 .tag-select-wrapper {
@@ -394,6 +469,11 @@ header {
 .todo-item.is-thunder {
     background: rgba(239, 68, 68, 0.05);
     border-color: rgba(239, 68, 68, 0.3);
+}
+
+.todo-item.is-thunder .checkbox-container {
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 .pin-btn:hover, .pin-btn.active {
@@ -469,7 +549,7 @@ header {
     }
     
     .stats {
-        text-align: center;
+        display: none;
     }
 }
 
@@ -536,4 +616,118 @@ header {
     height: 100%;
     z-index: 0;
     pointer-events: none;
+}
+
+/* Footer Styles */
+.app-footer {
+    margin-top: 40px;
+    padding: 20px 0;
+    text-align: center;
+    border-top: 2px dashed var(--border-color);
+}
+
+.app-footer p {
+    font-size: 14px;
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.hidden {
+    display: none;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal-content {
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalPop {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 4px solid var(--border-color);
+}
+
+.modal-header h2 {
+    font-size: 20px;
+    font-weight: normal;
+}
+
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.task-info {
+    font-size: 14px;
+    color: var(--text-muted);
+    background: var(--input-bg);
+    padding: 10px;
+    border: 2px dashed var(--border-color);
+}
+
+#task-note {
+    width: 100%;
+    background: var(--input-bg);
+    border: 4px solid var(--border-color);
+    padding: 14px;
+    color: var(--text-main);
+    font-size: 15px;
+    resize: none;
+    transition: all 0.1s ease;
+}
+
+#task-note:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.modal-footer .primary-btn {
+    width: 100%;
+    padding: 12px;
+}
+
+/* 點擊清單內容時的游標提示 */
+.todo-content {
+    cursor: pointer;
+}
+
+.todo-content:hover .task-text {
+    color: var(--primary-color);
 }

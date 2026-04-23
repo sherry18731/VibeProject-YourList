@@ -14,9 +14,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const moonIcon = document.getElementById('moon-icon');
     const filterBtns = document.querySelectorAll('.filter-btn');
     const itemsLeft = document.getElementById('items-left');
+    const eraserBtn = document.getElementById('eraser-btn');
+    
+    // Modal Elements
+    const noteModal = document.getElementById('note-modal');
+    const closeModalBtn = document.getElementById('close-modal');
+    const saveNoteBtn = document.getElementById('save-note');
+    const taskNoteTextarea = document.getElementById('task-note');
+    const modalTaskText = document.getElementById('modal-task-text');
+    let currentEditingTaskId = null;
 
     let tasks = JSON.parse(localStorage.getItem('vibe-tasks')) || [];
     let currentFilter = 'active';
+    let isEraserMode = false;
 
     // --- Canvas Animation Logic ---
     const canvas = document.getElementById('animation-canvas');
@@ -48,7 +58,55 @@ document.addEventListener('DOMContentLoaded', () => {
         mouseX = e.clientX;
         mouseY = e.clientY;
     });
+
+    window.addEventListener('touchstart', (e) => {
+        if (isEraserMode) {
+            mouseX = e.touches[0].clientX;
+            mouseY = e.touches[0].clientY;
+        }
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+        if (isEraserMode) {
+            mouseX = e.touches[0].clientX;
+            mouseY = e.touches[0].clientY;
+        }
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => {
+        // 觸控結束後將座標移開，避免持續清除
+        mouseX = -1000;
+        mouseY = -1000;
+    });
     resizeCanvas();
+
+    let saveTimeout = null;
+    function saveParticles() {
+        if (saveTimeout) clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            const data = particles
+                .filter(p => p.isAtBottom)
+                .map(p => ({
+                    x: p.x,
+                    y: p.y,
+                    color: p.color,
+                    radius: p.radius
+                }));
+            localStorage.setItem('vibe-particles', JSON.stringify(data));
+            saveTimeout = null;
+        }, 100);
+    }
+
+    function loadParticles() {
+        const data = JSON.parse(localStorage.getItem('vibe-particles')) || [];
+        data.forEach(item => {
+            const p = new Particle(item.x, item.y, item.color);
+            p.radius = item.radius;
+            p.isAtBottom = true;
+            p.stack();
+            particles.push(p);
+        });
+    }
 
     const ballColors = {
         '影視': '#FFB3BA',
@@ -198,6 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.vx = 0;
                     this.vy = 0;
                     this.stack();
+                    saveParticles(); // 粒子落地時儲存
                 }
             } else {
                 // 積雪動態：檢測下方是否有空位 (塌陷邏輯)
@@ -317,9 +376,11 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = particles.length - 1; i >= 0; i--) {
             const p = particles[i];
             p.update();
-            if (p.checkInteraction(mouseX, mouseY)) {
+            // 僅在橡皮擦模式開啟時，滑鼠移過才會清除粒子
+            if (isEraserMode && p.checkInteraction(mouseX, mouseY)) {
                 p.remove(); // 移除前先扣除高度圖貢獻
                 particles.splice(i, 1);
+                saveParticles(); // 粒子被清除時儲存
             }
         }
         
@@ -344,20 +405,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initialization ---
     initTheme();
+    initUserSettings();
     renderTasks();
+    loadParticles(); // 載入持久化的粒子
     
-    // 初始化現有未完成任務的球
+    // 初始化現有任務的球 (排除已完成與踩雷項目)
     tasks.forEach(task => {
-        if (!task.completed) spawnBall(task.id, task.tag);
+        if (!task.completed && !task.isThunder) spawnBall(task.id, task.tag);
     });
 
     // --- Event Listeners ---
     addBtn.addEventListener('click', addTask);
-    taskInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') addTask();
+    // 針對桌面版的 Enter 鍵快捷新增
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && window.innerWidth > 480) {
+            // 若焦點在輸入欄位已由上方 listener 處理，避免重複執行
+            if (document.activeElement !== taskInput && taskInput.value.trim()) {
+                addTask();
+            }
+        }
     });
 
     themeToggle.addEventListener('click', toggleTheme);
+
+    if (eraserBtn) {
+        eraserBtn.addEventListener('click', () => {
+            isEraserMode = !isEraserMode;
+            eraserBtn.classList.toggle('active', isEraserMode);
+            document.body.classList.toggle('eraser-mode', isEraserMode);
+            
+            if (window.navigator.vibrate) window.navigator.vibrate(20);
+        });
+    }
 
     filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -374,14 +453,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const deleteBtn = e.target.closest('.delete-btn');
         const pinBtn = e.target.closest('.pin-btn');
         const bombBtn = e.target.closest('.bomb-btn');
-        const toggleArea = e.target.closest('.checkbox-container') || e.target.closest('.todo-content');
+        const toggleArea = e.target.closest('.checkbox-container');
+        const contentArea = e.target.closest('.todo-content');
         
         const item = e.target.closest('.todo-item');
         if (!item) return;
         
         const taskId = item.getAttribute('data-id');
 
-        // 判斷點擊的是哪個按鈕
+        // 判斷點擊的是哪個區域
         if (deleteBtn) {
             deleteTask(taskId);
         } else if (pinBtn) {
@@ -390,8 +470,18 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleThunder(taskId);
         } else if (toggleArea) {
             toggleTask(taskId);
+        } else if (contentArea) {
+            openNoteModal(taskId);
         }
     });
+
+    closeModalBtn.addEventListener('click', closeNoteModal);
+    saveNoteBtn.addEventListener('click', saveTaskNote);
+    
+    // 點擊背景關閉 (已依需求移除)
+    // noteModal.addEventListener('click', (e) => {
+    //     if (e.target === noteModal) closeNoteModal();
+    // });
 
     // --- Functions ---
 
@@ -408,6 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
             completed: false,
             pinned: false,
             isThunder: false,
+            note: '', // 文字紀錄
             createdAt: new Date().toISOString()
         };
 
@@ -420,7 +511,113 @@ document.addEventListener('DOMContentLoaded', () => {
         taskReason.value = '';
     }
 
+    function openNoteModal(id) {
+        const task = tasks.find(t => String(t.id) === String(id));
+        if (!task) return;
+
+        currentEditingTaskId = id;
+        modalTaskText.innerText = `項目：${task.text}`;
+        taskNoteTextarea.value = task.note || '';
+        
+        noteModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // 禁止背景捲動
+    }
+
+    function closeNoteModal() {
+        noteModal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        currentEditingTaskId = null;
+    }
+
+    function saveTaskNote() {
+        if (!currentEditingTaskId) return;
+
+        tasks = tasks.map(task => {
+            if (String(task.id) === String(currentEditingTaskId)) {
+                return { ...task, note: taskNoteTextarea.value };
+            }
+            return task;
+        });
+
+        saveAndRender();
+        closeNoteModal();
+    }
+
+    function initUserSettings() {
+        const savedLang = localStorage.getItem('vibe-lang') || 'zh-TW';
+        
+        // 簡易的多語系對應 (主頁面部分)
+        if (savedLang === 'en') {
+            // 輸入區域
+            const taskInputEl = document.getElementById('task-input');
+            if (taskInputEl) taskInputEl.placeholder = 'What is next?';
+            
+            const reasonLabel = document.querySelector('label[for="task-reason"]');
+            if (reasonLabel) reasonLabel.textContent = 'Note (max 15 chars)';
+            
+            const tagLabel = document.querySelector('label[for="task-tag"]');
+            if (tagLabel) tagLabel.textContent = 'Tag';
+            
+            const addBtnEl = document.getElementById('add-btn');
+            if (addBtnEl) addBtnEl.textContent = 'Add to List';
+
+            // 標籤選項
+            const tagSelect = document.getElementById('task-tag');
+            if (tagSelect) {
+                const tagMap = {
+                    '影視': '🎬 Movie/TV',
+                    '書籍': '📖 Book',
+                    '音樂': '🎵 Music',
+                    '課程': '🎓 Course',
+                    '遊戲': '🎮 Game'
+                };
+                Array.from(tagSelect.options).forEach(opt => {
+                    if (tagMap[opt.value]) opt.textContent = tagMap[opt.value];
+                });
+            }
+            
+            // 過濾器
+            const filters = {
+                'all': 'All',
+                'active': 'Active',
+                'completed': 'Done',
+                'thunder': 'Bomb'
+            };
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const f = btn.getAttribute('data-filter');
+                if (filters[f]) btn.textContent = filters[f];
+            });
+
+            // 空狀態
+            const emptyState = document.querySelector('.empty-state p');
+            if (emptyState) emptyState.textContent = 'No tasks yet, add one!';
+
+            // 頁尾
+            const footerText = document.querySelector('.app-footer p');
+            if (footerText) footerText.textContent = 'The page is currently under development. Some features may be incomplete.';
+
+            // Modal
+            const modalTitle = document.getElementById('modal-title');
+            if (modalTitle) modalTitle.textContent = 'Note';
+            
+            const taskNoteTextareaEl = document.getElementById('task-note');
+            if (taskNoteTextareaEl) taskNoteTextareaEl.placeholder = 'Type your notes, thoughts, or logs here...';
+            
+            const saveNoteBtnEl = document.getElementById('save-note');
+            if (saveNoteBtnEl) saveNoteBtnEl.textContent = 'Save Note';
+
+            const eraserBtnEl = document.getElementById('eraser-btn');
+            if (eraserBtnEl) {
+                eraserBtnEl.title = 'Clear Particles';
+                eraserBtnEl.setAttribute('aria-label', 'Clear Particles');
+            }
+        }
+    }
+
     function toggleTask(id) {
+        const targetTask = tasks.find(t => String(t.id) === String(id));
+        if (targetTask && targetTask.isThunder) return; // 踩雷清單禁止切換狀態
+
         tasks = tasks.map(task => {
             if (String(task.id) === String(id)) {
                 const newCompleted = !task.completed;
@@ -444,9 +641,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function toggleThunder(id) {
-        tasks = tasks.map(task => 
-            String(task.id) === String(id) ? { ...task, isThunder: !task.isThunder } : task
-        );
+        tasks = tasks.map(task => {
+            if (String(task.id) === String(id)) {
+                const newIsThunder = !task.isThunder;
+                if (newIsThunder) {
+                    removeBall(id, true); // 標記為踩雷時執行爆炸效果並移除球體
+                } else if (!task.completed) {
+                    spawnBall(id, task.tag); // 取消踩雷且任務未完成時，重新產生球體
+                }
+                return { ...task, isThunder: newIsThunder };
+            }
+            return task;
+        });
         saveAndRender();
     }
 
@@ -501,14 +707,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update items left
         const activeCount = tasks.filter(t => !t.completed).length;
-        itemsLeft.innerText = `${activeCount} 項清單`;
+        const lang = localStorage.getItem('vibe-lang') || 'zh-TW';
+        if (lang === 'en') {
+            itemsLeft.innerText = `${activeCount} ${activeCount === 1 ? 'item' : 'items'} left`;
+        } else {
+            itemsLeft.innerText = `${activeCount} 項清單`;
+        }
     }
 
 
     function createTodoElement(task) {
+        const lang = localStorage.getItem('vibe-lang') || 'zh-TW';
+        const isEn = lang === 'en';
+        
+        const tagMap = {
+            '影視': 'Movie/TV',
+            '書籍': 'Book',
+            '音樂': 'Music',
+            '課程': 'Course',
+            '遊戲': 'Game'
+        };
+        const displayTag = isEn ? (tagMap[task.tag] || task.tag) : task.tag;
+
         return `
             <div class="todo-item ${task.completed ? 'completed' : ''} ${task.pinned ? 'pinned' : ''} ${task.isThunder ? 'is-thunder' : ''}" data-id="${task.id}" draggable="true">
-                <div class="drag-handle" title="按住拖拽排序">
+                <div class="drag-handle" title="${isEn ? 'Drag to reorder' : '按住拖拽排序'}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
                 </div>
                 <div class="checkbox-container">
@@ -516,19 +739,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="todo-content">
                     <div class="task-meta">
-                        <span class="tag-badge tag-${task.tag}">${task.tag}</span>
+                        <span class="tag-badge tag-${task.tag}">${displayTag}</span>
                     </div>
                     <span class="task-text">${escapeHtml(task.text)}</span>
                     ${task.reason ? `<span class="tag-reason-text">${escapeHtml(task.reason)}</span>` : ''}
                 </div>
                 <div class="actions">
-                    <button class="action-btn pin-btn ${task.pinned ? 'active' : ''}" title="${task.pinned ? '取消置頂' : '置頂任務'}">
+                    <button class="action-btn pin-btn ${task.pinned ? 'active' : ''}" title="${task.pinned ? (isEn ? 'Unpin' : '取消置頂') : (isEn ? 'Pin task' : '置頂任務')}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5"></path><path d="M9 18h6"></path><path d="M10 22h4"></path></svg>
                     </button>
-                    <button class="action-btn bomb-btn ${task.isThunder ? 'active' : ''}" title="${task.isThunder ? '移出踩雷' : '標記踩雷'}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="13" r="9"></circle><path d="m11 9 1 2"></path><path d="m15 13-2-1"></path><path d="m20 4-2.5 2.5"></path><path d="m18 2 1.5 1.5"></path><path d="M22 6l-1.5-1.5"></path></svg>
+                    <button class="action-btn bomb-btn ${task.isThunder ? 'active' : ''}" title="${task.isThunder ? (isEn ? 'Remove Bomb' : '取消踩雷') : (isEn ? 'Mark as Bomb' : '標記為踩雷')}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     </button>
-                    <button class="action-btn delete-btn" title="刪除任務">
+                    <button class="action-btn delete-btn" title="${isEn ? 'Delete task' : '刪除清單'}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                     </button>
                 </div>
@@ -579,13 +802,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function initDragAndDrop() {
         const items = todoList.querySelectorAll('.todo-item');
         
+        // --- Mouse Drag ---
         items.forEach(item => {
             item.addEventListener('dragstart', (e) => {
                 draggedItemId = item.getAttribute('data-id');
                 item.classList.add('dragging');
                 e.dataTransfer.effectAllowed = 'move';
-                
-                // 延遲一點隱藏原項目，以便生成正確的拖拽快照
                 setTimeout(() => {
                     item.style.display = 'none';
                 }, 0);
@@ -615,12 +837,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
         todoList.addEventListener('drop', (e) => {
             e.preventDefault();
-            
             const draggingItem = todoList.querySelector('.dragging');
             if (draggingItem && placeholder.parentNode) {
                 todoList.insertBefore(draggingItem, placeholder);
                 updateTasksOrder();
             }
+        });
+
+        // --- Touch Drag (Mobile Support) ---
+        let touchDragging = false;
+        let currentTouchItem = null;
+
+        todoList.addEventListener('touchstart', (e) => {
+            const handle = e.target.closest('.drag-handle');
+            if (!handle) return;
+            
+            currentTouchItem = handle.closest('.todo-item');
+            touchDragging = true;
+            draggedItemId = currentTouchItem.getAttribute('data-id');
+            currentTouchItem.classList.add('dragging');
+            currentTouchItem.after(placeholder);
+            
+            // 觸發震動回饋 (如果支援)
+            if (window.navigator.vibrate) window.navigator.vibrate(20);
+        }, { passive: false });
+
+        todoList.addEventListener('touchmove', (e) => {
+            if (!touchDragging) return;
+            e.preventDefault(); // 阻止頁面捲動
+
+            const touchY = e.touches[0].clientY;
+            const afterElement = getDragAfterElement(todoList, touchY);
+            
+            if (afterElement == null) {
+                todoList.appendChild(placeholder);
+            } else {
+                todoList.insertBefore(placeholder, afterElement);
+            }
+        }, { passive: false });
+
+        todoList.addEventListener('touchend', (e) => {
+            if (!touchDragging) return;
+            
+            currentTouchItem.classList.remove('dragging');
+            if (placeholder.parentNode) {
+                todoList.insertBefore(currentTouchItem, placeholder);
+                placeholder.parentNode.removeChild(placeholder);
+            }
+            
+            touchDragging = false;
+            currentTouchItem = null;
+            updateTasksOrder();
         });
     }
 

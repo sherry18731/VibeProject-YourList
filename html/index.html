@@ -23,7 +23,9 @@
             <div class="header-actions">
                 <button id="user-btn" class="icon-btn" aria-label="會員中心" onclick="window.location.href='member.html'">
                     <svg id="user-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    <span id="user-name-badge" class="hidden"></span>
+                </button>
+                <button id="eraser-btn" class="icon-btn" aria-label="清除粒子">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"></path><path d="M22 21H7"></path><path d="m5 11 9 9"></path></svg>
                 </button>
                 <button id="theme-toggle" class="icon-btn" aria-label="切換主題">
                     <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
@@ -38,7 +40,7 @@
             </div>
             <div class="options-group">
                 <div class="option-item">
-                    <label for="task-reason">理由 (限 15 字)</label>
+                    <label for="task-reason">備註 (限 15 字)</label>
                     <input type="text" id="task-reason" placeholder="" maxlength="15" autocomplete="off">
                 </div>
                 <div class="option-item">
@@ -77,9 +79,31 @@
                 <p>目前沒有任務，快新增一個吧！</p>
             </div>
         </main>
+
+        <footer class="app-footer">
+            <p>目前網頁正在開發階段，部分功能可能尚不完整。</p>
+        </footer>
     </div>
 
     <canvas id="animation-canvas"></canvas>
+    <div id="note-modal" class="modal-overlay hidden">
+        <div class="modal-content card">
+            <header class="modal-header">
+                <h2 id="modal-title">文字紀錄</h2>
+                <button id="close-modal" class="icon-btn" aria-label="關閉">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </header>
+            <div class="modal-body">
+                <p id="modal-task-text" class="task-info"></p>
+                <textarea id="task-note" placeholder="在此輸入關於此項目的筆記、心得或紀錄..." rows="10"></textarea>
+            </div>
+            <footer class="modal-footer">
+                <button id="save-note" class="primary-btn">儲存紀錄</button>
+            </footer>
+        </div>
+    </div>
+
     <script src="../js/script.js"></script>
 </body>
 </html>

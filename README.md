@@ -25,39 +25,6 @@ YourList/
 └─ ...
 ```
 
-## 起步指南
-
-您可以直接在本機開啟 `html/index.html`，或使用 `live-server` 於瀏覽器中即時體驗此功能。
-
-1. **安裝相依套件**（若有使用 npm）
-   ```bash
-   npm install
-   ```
-
-2. **執行本機開發伺服器**（以 `live-server` 為例）
-   ```bash
-   npx live-server ./html
-   ```
-   伺服器預設會在 `http://127.0.0.1:5501` 提供預覽。
-
-3. 打開瀏覽器前往上述網址，即可看到您的待辦清單介面。
-
-## 部署說明
-
-- 可將 `html/`、`css/`、`js/` 目錄上傳至任意靜態網站服務（如 GitHub Pages、Netlify、Vercel 等）。
-- 若需要後端支援（例如使用者資料庫），請自行整合 API，並在前端的 `js/` 中呼叫相應端點。
-
-## 貢獻指南
-
-1. Fork 本倉庫。
-2. 建立新分支：`git checkout -b feature/your-feature`
-3. 提交變更並 push：`git push origin feature/your-feature`
-4. 發起 Pull Request，說明您的更動內容。
-
-## 授權條款
-
-本專案採用 **MIT License**，詳見 `LICENSE` 檔案。
-
 ---
 
 此份文件由AI撰寫，可能會有錯誤。
