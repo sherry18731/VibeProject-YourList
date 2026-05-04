@@ -29,21 +29,44 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // 初始化讀取設定
-    const savedUser = JSON.parse(localStorage.getItem('vibe-user')) || { name: 'User', email: 'user@example.com' };
+    let currentUser = null;
     const savedLang = localStorage.getItem('vibe-lang') || 'zh-TW';
-
-    userNameInput.value = savedUser.name;
     languageSelect.value = savedLang;
     applyLanguage(savedLang);
 
+    async function initSettingsApp() {
+        const { data: { session } } = await window.supabaseClient.auth.getSession();
+        if (!session) {
+            window.location.href = 'login.html';
+            return;
+        }
+        currentUser = session.user;
+        userNameInput.value = currentUser.user_metadata?.name || currentUser.email.split('@')[0];
+    }
+    
+    initSettingsApp();
+
     // 儲存設定
-    saveBtn.addEventListener('click', () => {
+    saveBtn.addEventListener('click', async () => {
         const newName = userNameInput.value.trim();
         const newLang = languageSelect.value;
+        const btnText = saveBtn.innerText;
 
-        if (newName) {
-            savedUser.name = newName;
-            localStorage.setItem('vibe-user', JSON.stringify(savedUser));
+        saveBtn.innerText = '處理中...';
+        saveBtn.disabled = true;
+
+        if (newName && currentUser) {
+            // Update user metadata in Supabase
+            const { error } = await window.supabaseClient.auth.updateUser({
+                data: { name: newName }
+            });
+            
+            if (error) {
+                alert('名稱更新失敗: ' + error.message);
+                saveBtn.innerText = btnText;
+                saveBtn.disabled = false;
+                return;
+            }
         }
 
         localStorage.setItem('vibe-lang', newLang);
@@ -77,14 +100,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initTheme() {
         const savedTheme = localStorage.getItem('vibe-theme') || 'light';
-        document.body.className = savedTheme + '-mode';
+        // 類別現在由 head 中的腳本處理，這裡只需確保圖示正確
         updateThemeIcons(savedTheme);
     }
 
     function toggleTheme() {
-        const currentTheme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-        document.body.className = newTheme + '-mode';
+        const isDark = document.documentElement.classList.contains('dark-mode');
+        const newTheme = isDark ? 'light' : 'dark';
+        
+        document.documentElement.classList.remove('light-mode', 'dark-mode');
+        document.documentElement.classList.add(newTheme + '-mode');
+        
         localStorage.setItem('vibe-theme', newTheme);
         updateThemeIcons(newTheme);
     }

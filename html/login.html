@@ -11,8 +11,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('vibe-theme') || 'light';
+            document.documentElement.classList.add(savedTheme + '-mode');
+        })();
+    </script>
 </head>
-<body class="light-mode login-page">
+<body class="login-page">
     <div class="background-blur"></div>
 
     <a href="index.html" class="back-home">
@@ -22,6 +28,7 @@
 
     <div class="login-container">
         <div id="login-card" class="login-card view-login">
+            <div id="auth-notification" class="notification"></div>
             <!-- Login View -->
             <div id="login-form-container">
                 <header class="login-header">
@@ -97,6 +104,9 @@
         <p>目前網頁正在開發階段，部分功能可能尚不完整。</p>
     </footer>
 
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
     <script src="../js/login.js"></script>
 </body>
 </html>

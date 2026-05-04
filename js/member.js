@@ -7,29 +7,73 @@ document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     initLanguage();
 
-    // 讀取資料並計算統計
-    const tasks = JSON.parse(localStorage.getItem('vibe-tasks')) || [];
-    const lang = localStorage.getItem('vibe-lang') || 'zh-TW';
+    let tasks = [];
+    let currentUser = null;
 
-    let completedCount = 0;
-    let thunderCount = 0;
+    async function initMemberApp() {
+        const { data: { session } } = await window.supabaseClient.auth.getSession();
+        if (!session) {
+            window.location.href = 'login.html';
+            return;
+        }
+        currentUser = session.user;
 
-    tasks.forEach(task => {
-        if (task.completed) completedCount++;
-        if (task.isThunder) thunderCount++;
+        // 讀取並更新使用者名稱
+        const memberNameDisplay = document.querySelector('.member-name');
+        const memberEmailDisplay = document.querySelector('.member-email');
+        if (memberNameDisplay) {
+            memberNameDisplay.innerText = currentUser.user_metadata?.name || currentUser.email.split('@')[0];
+        }
+        if (memberEmailDisplay) {
+            memberEmailDisplay.innerText = currentUser.email;
+        }
+
+        // 讀取資料並計算統計
+        const { data, error } = await window.supabaseClient
+            .from('tasks')
+            .select('*')
+            .eq('user_id', currentUser.id);
+
+        if (!error && data) {
+            tasks = data;
+        }
+
+        // 更新 DOM
+        updateStats('all');
+    }
+
+    initMemberApp();
+
+    // 監聽分類切換
+    const categoryBtns = document.querySelectorAll('#category-tabs .filter-btn');
+    categoryBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            categoryBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateStats(btn.dataset.category);
+        });
     });
 
-    // 更新 DOM，加入動畫數字效果 (可選，這裡直接更新)
-    // 更新 DOM
-    document.getElementById('completed-count').innerText = completedCount;
-    document.getElementById('thunder-count').innerText = thunderCount;
+    function updateStats(category) {
+        let currentCompleted = 0;
+        let currentThunder = 0;
 
-    // 讀取並更新使用者名稱
-    const savedUser = JSON.parse(localStorage.getItem('vibe-user')) || { name: 'User' };
-    const memberNameDisplay = document.querySelector('.member-name');
-    if (memberNameDisplay) {
-        memberNameDisplay.innerText = savedUser.name;
+        tasks.forEach(task => {
+            const matchesCategory = category === 'all' || task.tag === category;
+            if (matchesCategory) {
+                if (task.isThunder) {
+                    currentThunder++;
+                } else if (task.completed) {
+                    currentCompleted++;
+                }
+            }
+        });
+
+        document.getElementById('completed-count').innerText = currentCompleted;
+        document.getElementById('thunder-count').innerText = currentThunder;
     }
+
+    // 會員名稱更新已移至 initMemberApp() 中
 
     function initLanguage() {
         const savedLang = localStorage.getItem('vibe-lang') || 'zh-TW';
@@ -49,21 +93,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const backBtn = document.getElementById('back-btn');
             if (backBtn) backBtn.setAttribute('aria-label', 'Back to Home');
+
+            // 分類翻譯
+            const categoryMap = {
+                'all': 'All',
+                '影視': 'Movie',
+                '書籍': 'Book',
+                '音樂': 'Music',
+                '課程': 'Course',
+                '遊戲': 'Game'
+            };
+            document.querySelectorAll('#category-tabs .filter-btn').forEach(btn => {
+                const cat = btn.dataset.category;
+                if (categoryMap[cat]) btn.textContent = categoryMap[cat];
+            });
         }
     }
 
     // --- 主題切換邏輯 ---
     function initTheme() {
         const savedTheme = localStorage.getItem('vibe-theme') || 'light';
-        document.body.className = savedTheme + '-mode';
+        // 類別現在由 head 中的腳本處理，這裡只需確保圖示正確
         updateThemeIcons(savedTheme);
     }
 
     function toggleTheme() {
-        const currentTheme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        const isDark = document.documentElement.classList.contains('dark-mode');
+        const newTheme = isDark ? 'light' : 'dark';
 
-        document.body.className = newTheme + '-mode';
+        document.documentElement.classList.remove('light-mode', 'dark-mode');
+        document.documentElement.classList.add(newTheme + '-mode');
+
         localStorage.setItem('vibe-theme', newTheme);
         updateThemeIcons(newTheme);
     }

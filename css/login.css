@@ -6,6 +6,7 @@
 }
 
 body.login-page {
+    flex-direction: column;
     justify-content: center;
     align-items: center;
 }
@@ -223,4 +224,31 @@ body.login-page {
         top: 20px;
         left: 20px;
     }
+}
+
+/* Custom Notification */
+.notification {
+    padding: 14px 20px;
+    margin-bottom: 24px;
+    border: 4px solid var(--border-color);
+    background-color: var(--input-bg);
+    color: var(--text-main);
+    font-size: 15px;
+    text-align: left;
+    display: none;
+    align-items: center;
+}
+
+.notification.show {
+    display: flex;
+}
+
+.notification.error {
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+}
+
+.notification.success {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
 }

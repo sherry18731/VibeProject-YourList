@@ -42,8 +42,14 @@
             padding: 14px;
         }
     </style>
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('vibe-theme') || 'light';
+            document.documentElement.classList.add(savedTheme + '-mode');
+        })();
+    </script>
 </head>
-<body class="light-mode">
+<body>
     <div class="background-blur"></div>
     
     <div class="app-container">
@@ -88,6 +94,9 @@
         </footer>
     </div>
 
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
     <script src="../js/settings.js"></script>
 </body>
 </html>

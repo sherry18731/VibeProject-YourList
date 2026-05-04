@@ -21,10 +21,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModalBtn = document.getElementById('close-modal');
     const saveNoteBtn = document.getElementById('save-note');
     const taskNoteTextarea = document.getElementById('task-note');
+    const modalTaskReason = document.getElementById('modal-task-reason');
     const modalTaskText = document.getElementById('modal-task-text');
     let currentEditingTaskId = null;
 
-    let tasks = JSON.parse(localStorage.getItem('vibe-tasks')) || [];
+    let tasks = [];
+    let currentUser = null;
     let currentFilter = 'active';
     let isEraserMode = false;
 
@@ -404,15 +406,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Initialization ---
-    initTheme();
-    initUserSettings();
-    renderTasks();
-    loadParticles(); // 載入持久化的粒子
-    
-    // 初始化現有任務的球 (排除已完成與踩雷項目)
-    tasks.forEach(task => {
-        if (!task.completed && !task.isThunder) spawnBall(task.id, task.tag);
-    });
+    async function initApp() {
+        const { data: { session } } = await window.supabaseClient.auth.getSession();
+        if (!session) {
+            window.location.href = 'login.html';
+            return;
+        }
+        currentUser = session.user;
+        
+        initTheme();
+        initUserSettings();
+        
+        const { data, error } = await window.supabaseClient
+            .from('tasks')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false });
+
+        if (!error && data) {
+            tasks = data;
+            
+            // 初始化現有任務的球
+            balls.clear(); 
+            tasks.forEach(task => {
+                if (!task.completed && !task.isThunder) spawnBall(task.id, task.tag);
+            });
+            
+            renderTasks();
+        }
+        
+        loadParticles(); // 載入持久化的粒子
+    }
+
+    initApp();
 
     // --- Event Listeners ---
     addBtn.addEventListener('click', addTask);
@@ -485,30 +511,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Functions ---
 
-    function addTask() {
+    async function addTask() {
         const text = taskInput.value.trim();
         const reason = taskReason.value.trim();
-        if (!text) return;
+        if (!text || !currentUser) return;
 
         const newTask = {
-            id: Date.now().toString(),
+            user_id: currentUser.id,
             text: text,
             reason: reason,
             tag: taskTag.value,
             completed: false,
             pinned: false,
             isThunder: false,
-            note: '', // 文字紀錄
-            createdAt: new Date().toISOString()
+            note: ''
         };
 
-        tasks.unshift(newTask);
-        spawnBall(newTask.id, newTask.tag);
-        saveAndRender();
-        
-        // Reset inputs
-        taskInput.value = '';
-        taskReason.value = '';
+        const { data, error } = await window.supabaseClient
+            .from('tasks')
+            .insert([newTask])
+            .select();
+
+        if (error) {
+            console.error('新增失敗', error);
+            alert('新增任務失敗');
+            return;
+        }
+
+        if (data && data[0]) {
+            tasks.unshift(data[0]);
+            spawnBall(data[0].id, data[0].tag);
+
+            // 切換回代辦分頁
+            currentFilter = 'active';
+            filterBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === 'active');
+            });
+
+            saveAndRender();
+            
+            // Reset inputs
+            taskInput.value = '';
+            taskReason.value = '';
+        }
     }
 
     function openNoteModal(id) {
@@ -518,6 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentEditingTaskId = id;
         modalTaskText.innerText = `項目：${task.text}`;
         taskNoteTextarea.value = task.note || '';
+        if (modalTaskReason) modalTaskReason.value = task.reason || '';
         
         noteModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden'; // 禁止背景捲動
@@ -529,18 +575,32 @@ document.addEventListener('DOMContentLoaded', () => {
         currentEditingTaskId = null;
     }
 
-    function saveTaskNote() {
+    async function saveTaskNote() {
         if (!currentEditingTaskId) return;
 
-        tasks = tasks.map(task => {
-            if (String(task.id) === String(currentEditingTaskId)) {
-                return { ...task, note: taskNoteTextarea.value };
-            }
-            return task;
-        });
+        const newNote = taskNoteTextarea.value;
+        const newReason = modalTaskReason ? modalTaskReason.value : '';
 
-        saveAndRender();
-        closeNoteModal();
+        const { error } = await window.supabaseClient
+            .from('tasks')
+            .update({ note: newNote, reason: newReason })
+            .eq('id', currentEditingTaskId);
+
+        if (!error) {
+            tasks = tasks.map(task => {
+                if (String(task.id) === String(currentEditingTaskId)) {
+                    return { 
+                        ...task, 
+                        note: newNote,
+                        reason: newReason
+                    };
+                }
+                return task;
+            });
+
+            saveAndRender();
+            closeNoteModal();
+        }
     }
 
     function initUserSettings() {
@@ -606,6 +666,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const saveNoteBtnEl = document.getElementById('save-note');
             if (saveNoteBtnEl) saveNoteBtnEl.textContent = 'Save Note';
 
+            const modalReasonLabel = document.querySelector('label[for="modal-task-reason"]');
+            if (modalReasonLabel) modalReasonLabel.textContent = 'Short Note (max 15 chars)';
+            
+            const modalReasonInput = document.getElementById('modal-task-reason');
+            if (modalReasonInput) modalReasonInput.placeholder = 'Enter short note...';
+
             const eraserBtnEl = document.getElementById('eraser-btn');
             if (eraserBtnEl) {
                 eraserBtnEl.title = 'Clear Particles';
@@ -614,68 +680,104 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function toggleTask(id) {
+    async function toggleTask(id) {
         const targetTask = tasks.find(t => String(t.id) === String(id));
         if (targetTask && targetTask.isThunder) return; // 踩雷清單禁止切換狀態
 
-        tasks = tasks.map(task => {
-            if (String(task.id) === String(id)) {
-                const newCompleted = !task.completed;
-                if (newCompleted) {
-                    removeBall(id, true); // 完成則移除並爆裂
-                } else {
-                    spawnBall(id, task.tag); // 取消完成則找回
+        const newCompleted = !targetTask.completed;
+
+        const { error } = await window.supabaseClient
+            .from('tasks')
+            .update({ completed: newCompleted })
+            .eq('id', id);
+
+        if (!error) {
+            tasks = tasks.map(task => {
+                if (String(task.id) === String(id)) {
+                    if (newCompleted) {
+                        removeBall(id, true); // 完成則移除並爆裂
+                    } else {
+                        spawnBall(id, task.tag); // 取消完成則找回
+                    }
+                    return { ...task, completed: newCompleted };
                 }
-                return { ...task, completed: newCompleted };
-            }
-            return task;
-        });
-        saveAndRender();
+                return task;
+            });
+            saveAndRender();
+        }
     }
 
-    function togglePinTask(id) {
-        tasks = tasks.map(task => 
-            String(task.id) === String(id) ? { ...task, pinned: !task.pinned } : task
-        );
-        saveAndRender();
+    async function togglePinTask(id) {
+        const targetTask = tasks.find(t => String(t.id) === String(id));
+        if (!targetTask) return;
+
+        const newPinned = !targetTask.pinned;
+
+        const { error } = await window.supabaseClient
+            .from('tasks')
+            .update({ pinned: newPinned })
+            .eq('id', id);
+
+        if (!error) {
+            tasks = tasks.map(task => 
+                String(task.id) === String(id) ? { ...task, pinned: newPinned } : task
+            );
+            saveAndRender();
+        }
     }
 
-    function toggleThunder(id) {
-        tasks = tasks.map(task => {
-            if (String(task.id) === String(id)) {
-                const newIsThunder = !task.isThunder;
-                if (newIsThunder) {
-                    removeBall(id, true); // 標記為踩雷時執行爆炸效果並移除球體
-                } else if (!task.completed) {
-                    spawnBall(id, task.tag); // 取消踩雷且任務未完成時，重新產生球體
+    async function toggleThunder(id) {
+        const targetTask = tasks.find(t => String(t.id) === String(id));
+        if (targetTask && targetTask.completed) return; // 已完成清單禁止標記踩雷
+
+        const newIsThunder = !targetTask.isThunder;
+
+        const { error } = await window.supabaseClient
+            .from('tasks')
+            .update({ isThunder: newIsThunder })
+            .eq('id', id);
+
+        if (!error) {
+            tasks = tasks.map(task => {
+                if (String(task.id) === String(id)) {
+                    if (newIsThunder) {
+                        removeBall(id, true); // 標記為踩雷時執行爆炸效果並移除球體
+                    } else if (!task.completed) {
+                        spawnBall(id, task.tag); // 取消踩雷且任務未完成時，重新產生球體
+                    }
+                    return { ...task, isThunder: newIsThunder };
                 }
-                return { ...task, isThunder: newIsThunder };
-            }
-            return task;
-        });
-        saveAndRender();
+                return task;
+            });
+            saveAndRender();
+        }
     }
 
-    function deleteTask(id) {
-        const itemElement = document.querySelector(`.todo-item[data-id="${id}"]`);
-        
-        if (itemElement) {
-            itemElement.classList.add('deleting');
-            setTimeout(() => {
+    async function deleteTask(id) {
+        const { error } = await window.supabaseClient
+            .from('tasks')
+            .delete()
+            .eq('id', id);
+
+        if (!error) {
+            const itemElement = document.querySelector(`.todo-item[data-id="${id}"]`);
+            if (itemElement) {
+                itemElement.classList.add('deleting');
+                setTimeout(() => {
+                    tasks = tasks.filter(task => String(task.id) !== String(id));
+                    saveAndRender();
+                    removeBall(id);
+                }, 300);
+            } else {
                 tasks = tasks.filter(task => String(task.id) !== String(id));
                 saveAndRender();
                 removeBall(id);
-            }, 300);
-        } else {
-            tasks = tasks.filter(task => String(task.id) !== String(id));
-            saveAndRender();
-            removeBall(id);
+            }
         }
     }
 
     function saveAndRender() {
-        localStorage.setItem('vibe-tasks', JSON.stringify(tasks));
-        console.log('儲存至 localStorage 並重新渲染');
+        // 現在資料庫存取已改為 Supabase，此處僅做重新渲染
         renderTasks();
     }
 
@@ -691,7 +793,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const filteredTasks = sortedTasks.filter(task => {
             if (currentFilter === 'thunder') return task.isThunder;
             if (currentFilter === 'active') return !task.completed && !task.isThunder;
-            if (currentFilter === 'completed') return task.completed;
+            if (currentFilter === 'completed') return task.completed && !task.isThunder;
             return true;
         });
 
@@ -705,13 +807,26 @@ document.addEventListener('DOMContentLoaded', () => {
         // 重新初始化拖拽監聽器
         initDragAndDrop();
 
-        // Update items left
-        const activeCount = tasks.filter(t => !t.completed).length;
+        // Update items count based on current filter
+        const count = filteredTasks.length;
         const lang = localStorage.getItem('vibe-lang') || 'zh-TW';
-        if (lang === 'en') {
-            itemsLeft.innerText = `${activeCount} ${activeCount === 1 ? 'item' : 'items'} left`;
+        const isEn = lang === 'en';
+        
+        let label = '';
+        if (isEn) {
+            if (currentFilter === 'thunder') label = 'Bomb';
+            else if (currentFilter === 'completed') label = 'Done';
+            else if (currentFilter === 'active') label = 'Active';
+            else label = 'Total';
+            
+            itemsLeft.innerText = `${count} ${label} ${count === 1 ? 'item' : 'items'}`;
         } else {
-            itemsLeft.innerText = `${activeCount} 項清單`;
+            if (currentFilter === 'thunder') label = '項踩雷';
+            else if (currentFilter === 'completed') label = '項完成';
+            else if (currentFilter === 'active') label = '項待辦';
+            else label = '項清單';
+            
+            itemsLeft.innerText = `${count} ${label}`;
         }
     }
 
@@ -748,7 +863,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="action-btn pin-btn ${task.pinned ? 'active' : ''}" title="${task.pinned ? (isEn ? 'Unpin' : '取消置頂') : (isEn ? 'Pin task' : '置頂任務')}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5"></path><path d="M9 18h6"></path><path d="M10 22h4"></path></svg>
                     </button>
-                    <button class="action-btn bomb-btn ${task.isThunder ? 'active' : ''}" title="${task.isThunder ? (isEn ? 'Remove Bomb' : '取消踩雷') : (isEn ? 'Mark as Bomb' : '標記為踩雷')}">
+                    <button class="action-btn bomb-btn ${task.isThunder ? 'active' : ''} ${task.completed ? 'disabled' : ''}" 
+                            title="${task.completed ? (isEn ? 'Cannot mark completed item as Bomb' : '已完成項目不可標記為踩雷') : (task.isThunder ? (isEn ? 'Remove Bomb' : '取消踩雷') : (isEn ? 'Mark as Bomb' : '標記為踩雷'))}"
+                            ${task.completed ? 'disabled' : ''}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     </button>
                     <button class="action-btn delete-btn" title="${isEn ? 'Delete task' : '刪除清單'}">
@@ -765,15 +882,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initTheme() {
         const savedTheme = localStorage.getItem('vibe-theme') || 'light';
-        document.body.className = savedTheme + '-mode';
+        // 類別現在由 head 中的腳本處理，這裡只需確保圖示正確
         updateThemeIcons(savedTheme);
     }
 
     function toggleTheme() {
-        const currentTheme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        const isDark = document.documentElement.classList.contains('dark-mode');
+        const newTheme = isDark ? 'light' : 'dark';
         
-        document.body.className = newTheme + '-mode';
+        document.documentElement.classList.remove('light-mode', 'dark-mode');
+        document.documentElement.classList.add(newTheme + '-mode');
+        
         localStorage.setItem('vibe-theme', newTheme);
         updateThemeIcons(newTheme);
     }

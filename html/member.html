@@ -65,7 +65,6 @@
             grid-template-columns: 1fr 1fr;
             gap: 20px;
             width: 100%;
-            margin-top: 24px;
         }
 
         .stat-card {
@@ -106,10 +105,41 @@
         .stat-card.thunder .stat-value {
             color: var(--accent-red);
         }
+
+        .category-filter-section {
+            width: 100%;
+            margin-top: 24px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .category-filter-section .filter-tabs {
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2px;
+            width: 100%;
+        }
+
+        @media (max-width: 480px) {
+            .category-filter-section .filter-tabs {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+            .category-filter-section .filter-btn {
+                padding: 8px 4px;
+                font-size: 13px;
+            }
+        }
     </style>
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('vibe-theme') || 'light';
+            document.documentElement.classList.add(savedTheme + '-mode');
+        })();
+    </script>
 </head>
 
-<body class="light-mode">
+<body>
     <div class="background-blur"></div>
 
     <div class="app-container">
@@ -165,6 +195,17 @@
                 <div class="member-email">user@example.com</div>
             </div>
 
+            <div class="category-filter-section">
+                <div class="filter-tabs" id="category-tabs">
+                    <button class="filter-btn active" data-category="all">全部</button>
+                    <button class="filter-btn" data-category="影視">影視</button>
+                    <button class="filter-btn" data-category="書籍">書籍</button>
+                    <button class="filter-btn" data-category="音樂">音樂</button>
+                    <button class="filter-btn" data-category="課程">課程</button>
+                    <button class="filter-btn" data-category="遊戲">遊戲</button>
+                </div>
+            </div>
+
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-value" id="completed-count">0</div>
@@ -182,6 +223,9 @@
         </footer>
     </div>
 
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
     <script src="../js/member.js"></script>
 </body>
 

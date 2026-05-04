@@ -11,8 +11,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('vibe-theme') || 'light';
+            document.documentElement.classList.add(savedTheme + '-mode');
+        })();
+    </script>
 </head>
-<body class="light-mode">
+<body>
     <div class="background-blur"></div>
     
     <div class="app-container">
@@ -96,7 +102,11 @@
             </header>
             <div class="modal-body">
                 <p id="modal-task-text" class="task-info"></p>
-                <textarea id="task-note" placeholder="在此輸入關於此項目的筆記、心得或紀錄..." rows="10"></textarea>
+                <div class="modal-reason-group">
+                    <label for="modal-task-reason">短備註 (限 15 字)</label>
+                    <input type="text" id="modal-task-reason" maxlength="15" placeholder="輸入短備註...">
+                </div>
+                <textarea id="task-note" placeholder="在此輸入關於此項目的筆記、心得或紀錄..." rows="3" maxlength="300"></textarea>
             </div>
             <footer class="modal-footer">
                 <button id="save-note" class="primary-btn">儲存紀錄</button>
@@ -104,6 +114,9 @@
         </div>
     </div>
 
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
     <script src="../js/script.js"></script>
 </body>
 </html>
